@@ -37,7 +37,7 @@ val_plot <- function(lp, y, lim = c(0, 1), xlab = 'Predicted probability',
   Sm <- loess(y ~ p_hat, iter = 0)
   
   # Restrict plotting to above the 1st percentile and below the 99th percentile
-  bounds <- quantile(p_hat, probs = c(0.01, 0.99))
+  bounds <- quantile(p_hat, probs = c(0.01, 0.99),na.rm=T)
   
   sm_x <- sort(Sm$x)
   I1   <- sm_x>=bounds[1]&sm_x<=bounds[2]
@@ -92,8 +92,12 @@ val_plot <- function(lp, y, lim = c(0, 1), xlab = 'Predicted probability',
   }
   
   # Calculate performance measures
-  fit1 <- lrm(y ~ lp)
-  fit2 <- lrm(y ~ offset(lp))
+  i <- !is.infinite(lp)
+  nm <- sum(!i)
+  if(nm > 0)
+    warning(paste(nm, "observations deleted from logistic calibration due to probs. of 0 or 1"))
+  fit1 <- lrm(y[i] ~ lp[i])
+  fit2 <- lrm(y[i] ~ offset(lp[i]))
   
   stats <- paste('Calibration\n',
                  '...in the large: ', sprintf('%.2f', fit2$coefficients), '\n',
